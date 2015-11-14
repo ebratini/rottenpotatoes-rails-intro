@@ -18,6 +18,8 @@ class MoviesController < ApplicationController
     session[:sort_by] = params[:sort_by] unless params[:sort_by].to_s.empty?
     session[:rating_filter] = params[:ratings].keys unless params[:ratings].nil?
     
+    @sort_by = session[:sort_by]
+    @rating_filter = session[:rating_filter]
     unless params[:ratings].nil? || params[:sort_by].nil?
       unless session[:sort_by].to_s.empty?
         @movies = Movie.where({ rating: session[:rating_filter] }).
