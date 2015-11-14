@@ -16,3 +16,6 @@
 !/log/.keep
 /tmp
 log
+
+# Ignore Spring files.
+/spring/*.pid
