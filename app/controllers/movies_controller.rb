@@ -11,15 +11,23 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @sort_by = params[:sort_by]
     @all_ratings = Movie.all_ratings
-    @ratings = params[:ratings] || {}
-    @rating_filter =  @ratings.empty? ? @all_ratings : @ratings.keys
-    unless @sort_by.nil? || @sort_by.to_s.empty?
-      @movies = Movie.where({ rating: @rating_filter }).
-        order(@sort_by.to_sym)
+    
+    session[:sort_by] ||= ''
+    session[:rating_filter] ||= @all_ratings
+    session[:sort_by] = params[:sort_by] unless params[:sort_by].to_s.empty?
+    session[:rating_filter] = params[:ratings].keys unless params[:ratings].nil?
+    
+    unless params[:ratings].nil? || params[:sort_by].nil?
+      unless session[:sort_by].to_s.empty?
+        @movies = Movie.where({ rating: session[:rating_filter] }).
+          order(session[:sort_by].to_sym)
+      else
+        @movies = Movie.where({ rating: session[:rating_filter] })
+      end
     else
-       @movies = Movie.where({ rating: @rating_filter })
+      flash.keep
+      redirect_to movies_path(sort_by: session[:sort_by], ratings: ratings_hash)
     end
   end
 
@@ -50,5 +58,9 @@ class MoviesController < ApplicationController
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
   end
-
+  
+  private
+  def ratings_hash
+    session[:rating_filter].map { |r| [r, '1'] }.to_h
+  end
 end
