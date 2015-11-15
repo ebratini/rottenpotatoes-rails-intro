@@ -15,24 +15,22 @@ class MoviesController < ApplicationController
     
     # sorting/filtering default
     session[:sort_by] ||= ''
-    session[:rating_filter] ||= @all_ratings
+    session[:ratings] ||= @all_ratings.map { |rating| [rating, '1'] }.to_h
     
-    # user sorting/filtering setting
-    session[:sort_by] = params[:sort_by] if params[:sort_by]
-    session[:rating_filter] = params[:ratings].keys if params[:ratings]
+    # set and save user sorting/filtering setting from request
+    session[:sort_by] = @sort_by = params[:sort_by] || session[:sort_by]
+    session[:ratings] = @ratings = params[:ratings] || session[:ratings]
     
-    @sort_by = session[:sort_by]
-    @rating_filter = session[:rating_filter]
     if params[:ratings] && params[:sort_by]
       unless @sort_by.empty?
-        @movies = Movie.where({ rating: @rating_filter }).
+        @movies = Movie.where({ rating: @ratings.keys }).
           order(@sort_by.to_sym)
       else
-        @movies = Movie.where({ rating: @rating_filter })
+        @movies = Movie.where({ rating: @ratings.keys })
       end
     else
       flash.keep
-      redirect_to movies_path(sort_by: @sort_by, ratings: ratings_hash)
+      redirect_to movies_path(sort_by: @sort_by, ratings: @ratings)
     end
   end
 
@@ -62,10 +60,5 @@ class MoviesController < ApplicationController
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
     redirect_to movies_path
-  end
-  
-  private
-  def ratings_hash
-    @rating_filter.map { |r| [r, '1'] }.to_h
   end
 end
